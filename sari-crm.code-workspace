@@ -1,0 +1,18 @@
+{
+  "folders": [
+    { "name": "sari-crm", "path": "." },
+    { "name": "backend (Laravel)", "path": "backend" },
+    { "name": "frontend (React)", "path": "frontend" }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/vendor": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/vendor": true,
+      "**/storage": true
+    }
+  }
+}

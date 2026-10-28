@@ -1,0 +1,23 @@
+{
+  // Terminal > Run Task... > "Start BGE CRM (Mac)", or Terminal > Run Build Task (Shift+Command+B).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start BGE CRM (Mac)",
+      "type": "shell",
+      "command": "bash ./start-mac.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Run backend tests (Mac)",
+      "type": "shell",
+      "command": "/Applications/XAMPP/xamppfiles/bin/php artisan test",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
+    }
+  ]
+}
