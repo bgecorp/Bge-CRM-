@@ -48,15 +48,32 @@ jobs:
           HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          # Windows line endings or stray spaces from pasting would break the key.
+          printf '%s\n' "$KEY" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          ssh-keygen -y -f ~/.ssh/deploy > /dev/null || { echo "::error::SSH_PRIVATE_KEY is not a valid private key. Paste the whole file, including the BEGIN and END lines."; exit 1; }
+          HOST=$(printf '%s' "$HOST" | tr -d '[:space:]')
           # The server's own key, so the upload can't be redirected to another machine.
           echo "$HOST ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEs1UTp0dlaNqRGFBoEamTXf8xO4gnc64iPbsdalgfD2" > ~/.ssh/known_hosts
+
+      - name: Check the connection to the server
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          HOST=$(printf '%s' "$HOST" | tr -d '[:space:]'); USER=$(printf '%s' "$USER" | tr -d '[:space:]')
+          if ! ssh -v -i ~/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=30 "$USER@$HOST" true 2> ssh.log; then
+            grep -iE "connecting to|connection (refused|timed out|closed|reset)|host key|denied|offering|authenticated|no route" ssh.log | sed 's/^/  /'
+            echo "::error::Could not log in to the server. See the lines above."
+            exit 1
+          fi
+          echo "Connected."
 
       - name: Upload to the server
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
           USER: ${{ secrets.DEPLOY_USER }}
         run: |
+          HOST=$(printf '%s' "$HOST" | tr -d '[:space:]'); USER=$(printf '%s' "$USER" | tr -d '[:space:]')
           SSH="ssh -i $HOME/.ssh/deploy -o IdentitiesOnly=yes"
           RSYNC="rsync -az --delete --chmod=D755,F644 -e"
           $RSYNC "$SSH" --exclude=.env --exclude=storage/ --exclude=bootstrap/cache/ backend/ "$USER@$HOST:bge-crm/backend/"
@@ -68,5 +85,6 @@ jobs:
           HOST: ${{ secrets.DEPLOY_HOST }}
           USER: ${{ secrets.DEPLOY_USER }}
         run: |
+          HOST=$(printf '%s' "$HOST" | tr -d '[:space:]'); USER=$(printf '%s' "$USER" | tr -d '[:space:]')
           ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes "$USER@$HOST" \
             'cd ~/bge-crm/backend && php artisan package:discover && php artisan migrate --force && php artisan optimize:clear'
