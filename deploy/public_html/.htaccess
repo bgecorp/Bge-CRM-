@@ -1,0 +1,31 @@
+# BGE CRM: the website is index.html, the API (/api/...) is Laravel's index.php.
+DirectoryIndex index.html
+Options -MultiViews -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Pass the sign-in token to Laravel.
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Always use HTTPS.
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # API requests go to Laravel.
+    RewriteRule ^api(/.*)?$ index.php [L]
+
+    # Real files (pictures, scripts) are served as they are.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Every other page (/, /privacy, /terms, ...) is the website.
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Never serve hidden or settings files.
+<FilesMatch "^\.|\.(env|sql|log|lock)$">
+    Require all denied
+</FilesMatch>

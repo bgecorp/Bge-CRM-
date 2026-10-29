@@ -1,0 +1,72 @@
+# Deploys the CRM to the GoDaddy hosting on every push to main.
+# Needs three repository secrets: SSH_PRIVATE_KEY, DEPLOY_HOST, DEPLOY_USER.
+# Server layout: ~/bge-crm/backend (Laravel, outside the web root) and ~/public_html (website + API entry).
+# Never touched on the server: backend/.env, backend/storage (uploads, logs) and the SSL challenge folder.
+name: Deploy to GoDaddy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build the website
+        working-directory: frontend
+        env:
+          VITE_API_URL: /api
+        run: |
+          npm ci
+          npm run build
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Install the server's PHP packages
+        working-directory: backend
+        run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts
+
+      - name: Set up SSH
+        env:
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          # The server's own key, so the upload can't be redirected to another machine.
+          echo "$HOST ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEs1UTp0dlaNqRGFBoEamTXf8xO4gnc64iPbsdalgfD2" > ~/.ssh/known_hosts
+
+      - name: Upload to the server
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          SSH="ssh -i $HOME/.ssh/deploy -o IdentitiesOnly=yes"
+          RSYNC="rsync -az --delete --chmod=D755,F644 -e"
+          $RSYNC "$SSH" --exclude=.env --exclude=storage/ --exclude=bootstrap/cache/ backend/ "$USER@$HOST:bge-crm/backend/"
+          $RSYNC "$SSH" frontend/src/ "$USER@$HOST:bge-crm/frontend/src/"
+          $RSYNC "$SSH" --exclude=cgi-bin --exclude=.well-known frontend/dist/ deploy/public_html/ "$USER@$HOST:public_html/"
+
+      - name: Update the database and clear caches
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes "$USER@$HOST" \
+            'cd ~/bge-crm/backend && php artisan package:discover && php artisan migrate --force && php artisan optimize:clear'
