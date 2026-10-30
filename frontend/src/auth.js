@@ -11,9 +11,11 @@ export const ROLE_LABELS = {
   representative: 'Seller',
 };
 
+// "Remember me" keeps the session in localStorage, so it survives closing the browser.
+// Otherwise it lives in sessionStorage and ends when the browser is closed.
 function read(key) {
   try {
-    return localStorage.getItem(key);
+    return sessionStorage.getItem(key) ?? localStorage.getItem(key);
   } catch {
     return null;
   }
@@ -31,10 +33,16 @@ export function getStoredUser() {
   }
 }
 
-export function saveSession(token, user) {
+/** Stores a new sign-in (token + user), or with no token, updates the user of the current one. */
+export function saveSession(token, user, remember = true) {
   try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    let store = sessionStorage.getItem(TOKEN_KEY) ? sessionStorage : localStorage;
+    if (token) {
+      clearSession();
+      store = remember ? localStorage : sessionStorage;
+      store.setItem(TOKEN_KEY, token);
+    }
+    store.setItem(USER_KEY, JSON.stringify(user));
   } catch {
     // Private mode: the session lasts until the page is closed.
   }
@@ -42,8 +50,10 @@ export function saveSession(token, user) {
 
 export function clearSession() {
   try {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    for (const store of [localStorage, sessionStorage]) {
+      store.removeItem(TOKEN_KEY);
+      store.removeItem(USER_KEY);
+    }
   } catch {
     // Nothing stored.
   }

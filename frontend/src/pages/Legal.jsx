@@ -169,11 +169,11 @@ export default function Legal({ page }) {
   return (
     <div className="lp">
       <header className="lp-top">
-        <Link to="/" className="lp-brand" style={{ textDecoration: 'none' }}>
+        <Link to="/login" className="lp-brand" style={{ textDecoration: 'none' }}>
           <img src="/bge-logo.png" alt="" /><span><span className="brand-accent">BGE</span> Corporation</span>
         </Link>
         <nav>
-          <Link to="/" className="lp-back"><ArrowLeft size={16} style={{ verticalAlign: '-3px' }} /> Back to the shop</Link>
+          <Link to="/login" className="lp-back"><ArrowLeft size={16} style={{ verticalAlign: '-3px' }} /> Back to sign in</Link>
         </nav>
       </header>
       <main className="lp-legal">
@@ -184,7 +184,7 @@ export default function Legal({ page }) {
   );
 }
 
-export function LegalFooter() {
+function LegalFooter() {
   return (
     <footer className="lp-foot">
       <div><span className="brand-accent">BGE</span> Corporation · Distributor of Longlife products</div>

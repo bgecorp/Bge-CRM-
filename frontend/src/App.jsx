@@ -17,7 +17,7 @@ import Settings from './pages/Settings.jsx';
 import Assistant from './pages/Assistant.jsx';
 import Performance from './pages/Performance.jsx';
 import Products from './pages/Products.jsx';
-import Landing from './pages/Landing.jsx';
+import LoginPage from './pages/login/LoginPage.jsx';
 import WebOrders from './pages/WebOrders.jsx';
 import Accounts from './pages/Accounts.jsx';
 import LoginActivity from './pages/LoginActivity.jsx';
@@ -70,12 +70,18 @@ export default function App() {
   }, []);
 
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   // Public legal pages open the same way whether or not staff are signed in.
   if (pathname === '/privacy' || pathname === '/terms') return <Legal page={pathname.slice(1)} />;
 
-  // Signed out: the public website, with staff sign-in in its side panel.
-  if (!user) return <Landing onSignedIn={setUser} />;
+  // The sign-in page always opens at /login, even when signed in (handy for checking it).
+  if (pathname === '/login') {
+    return <LoginPage onSignedIn={(u) => { setUser(u); navigate('/', { replace: true }); }} />;
+  }
+
+  // Signed out: everything else goes to the sign-in page.
+  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <UserContext.Provider value={user}>
