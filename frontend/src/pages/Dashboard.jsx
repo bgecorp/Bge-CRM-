@@ -44,7 +44,7 @@ export default function Dashboard() {
         </section>
 
         <div className="kpis">
-          <Kpi tone="blue" icon={Users} label="Total Customers" value={num(totals.stores, 0)}
+          <Kpi tone="blue" icon={Users} label="Total Customers" value={num(totals.stores, 0)} to="/stores"
             note={totals.new_this_week ? <><ArrowUpRight size={14} /> {totals.new_this_week} new this week</> : `${num(totals.active_customers, 0)} active`} noteTone="up" />
           <Kpi tone="green" icon={Boxes} label="Packs Sold (7 days)" value={num(week.packs, 0)}
             note={week.change_pct === null ? 'No sales the week before' : (
@@ -242,14 +242,15 @@ export default function Dashboard() {
   );
 }
 
-function Kpi({ tone, icon: Icon, label, value, note, noteTone, small }) {
+function Kpi({ tone, icon: Icon, label, value, note, noteTone, small, to }) {
+  const Box = to ? Link : 'div';
   return (
-    <div className={`kpi kpi-${tone}`}>
+    <Box className={`kpi kpi-${tone} ${to ? 'kpi-link' : ''}`} {...(to ? { to, title: `View ${label.toLowerCase()}` } : {})}>
       <span className="kpi-icon"><Icon size={22} /></span>
       <div className="kpi-label">{label}</div>
       <div className={`kpi-value ${small ? 'kpi-value-text' : ''}`} title={typeof value === 'string' ? value : undefined}>{value}</div>
       {note && <div className={`kpi-note ${noteTone ? `note-${noteTone}` : ''}`}>{note}</div>}
-    </div>
+    </Box>
   );
 }
 
