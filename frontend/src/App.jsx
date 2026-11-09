@@ -213,7 +213,7 @@ function TopBar({ attention, admin, onMenu }) {
           }}
         >
           <Search size={18} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search customer, product, or notes..." aria-label="Search" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search customer, product, order no., or notes..." aria-label="Search" />
         </form>
       ) : <span />}
       <div className="topbar-right">

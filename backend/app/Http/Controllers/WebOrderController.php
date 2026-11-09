@@ -68,7 +68,7 @@ class WebOrderController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        return response()->json($order->only(['reference', 'total', 'price_to_confirm']), 201);
+        return response()->json($order->only(['order_number', 'reference', 'total', 'price_to_confirm']), 201);
     }
 
     public function index(Request $request)
@@ -77,6 +77,12 @@ class WebOrderController extends Controller
         $orders = (clone $base)
             ->with('handler:id,name')
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $term = '%'.$request->string('search')->trim().'%';
+                $q->where(fn ($w) => $w->where('order_number', 'like', $term)
+                    ->orWhere('customer_name', 'like', $term)
+                    ->orWhere('phone', 'like', $term));
+            })
             ->orderByDesc('created_at')->orderByDesc('id')
             ->limit(500)
             ->get();

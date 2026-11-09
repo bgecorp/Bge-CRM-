@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasOrderNumber;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Order extends Model
 {
+    use HasOrderNumber;
+
     protected $fillable = ['store_id', 'product_id', 'delivered_at', 'quantity', 'unit_price', 'amount', 'notes'];
 
     protected $casts = [
@@ -15,6 +18,12 @@ class Order extends Model
         'unit_price' => 'decimal:2',
         'amount' => 'decimal:2',
     ];
+
+    /** Store orders are numbered from their delivery date. */
+    protected function orderNumberDate(): mixed
+    {
+        return $this->delivered_at;
+    }
 
     public function store(): BelongsTo
     {

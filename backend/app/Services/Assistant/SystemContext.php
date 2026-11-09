@@ -35,6 +35,7 @@ class SystemContext
         What the system does: it tracks stores (category, contact, Facebook links, assigned sales rep, status), records each store's product sales as "packs sold over N days", stock counts, and orders delivered to the store; predicts from order history how long each customer's latest order will last and when they will order again; keeps follow-ups that people set; and ranks sales performance.
 
         Prediction rules (implemented in backend/app/Services/StockPredictor.php; tunable values come from GET /settings; never contradict them):
+        - Every order (orders and web_orders tables) has a unique, permanent order_number like 261108K7Q2MX4P: the order date as YYMMDD plus 8 random characters. Use it, not the row id, to name or look up an order (GET /orders/{order_number}).
         - Predictions come ONLY from each customer's order history per product (the orders table). Sales records and stock counts are kept for records and sales performance but do not affect predictions.
         - 1st order = baseline only, no prediction. 2nd order = first estimate (one interval). 3rd onward = refined (all intervals). Recalculated on every order. Same-day orders count as one.
         - A. Average daily consumption = packs of every order except the latest ÷ days between each of those orders and the next (pooled): (12 + 6) ÷ (5 + 4) = 2 packs/day. Optional recent weighting (recent_weighting, weighting_half_life_days).

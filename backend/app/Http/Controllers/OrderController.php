@@ -32,6 +32,12 @@ class OrderController extends Controller
         return response()->json($order->load('product:id,name'), 201);
     }
 
+    /** Look up one order by its order number, e.g. GET /orders/261108K7Q2MX4P. */
+    public function show(Order $order)
+    {
+        return $order->load(['store:id,name', 'product:id,name']);
+    }
+
     public function destroy(Order $order)
     {
         $store = $order->store;

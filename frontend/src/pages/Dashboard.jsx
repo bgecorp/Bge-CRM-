@@ -46,7 +46,7 @@ export default function Dashboard() {
         <div className="kpis">
           <Kpi tone="blue" icon={Users} label="Total Customers" value={num(totals.stores, 0)} to="/stores"
             note={totals.new_this_week ? <><ArrowUpRight size={14} /> {totals.new_this_week} new this week</> : `${num(totals.active_customers, 0)} active`} noteTone="up" />
-          <Kpi tone="green" icon={Boxes} label="Packs Sold (7 days)" value={num(week.packs, 0)}
+          <Kpi tone="pink" icon={Boxes} label="Packs Sold (7 days)" value={num(week.packs, 0)}
             note={week.change_pct === null ? 'No sales the week before' : (
               <>{week.change_pct >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />} {num(Math.abs(week.change_pct), 0)}% from last week</>
             )}

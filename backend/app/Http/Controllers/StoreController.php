@@ -110,7 +110,8 @@ class StoreController extends Controller
                     ->orWhere('facebook_url', 'like', $term)
                     ->orWhere('notes', 'like', $term)
                     ->orWhereHas('sales.product', fn ($p) => $p->where('name', 'like', $term))
-                    ->orWhereHas('orders.product', fn ($p) => $p->where('name', 'like', $term)));
+                    ->orWhereHas('orders.product', fn ($p) => $p->where('name', 'like', $term))
+                    ->orWhereHas('orders', fn ($o) => $o->where('order_number', 'like', $term)));
             })
             ->when($request->filled('category'), fn ($q) => $q->where('category', $request->category))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))

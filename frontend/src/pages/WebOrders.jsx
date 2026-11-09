@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MessageSquare, Phone } from 'lucide-react';
 import { api, qs } from '../api.js';
-import { ConfirmDelete, Empty, Field, Loading, Modal, PageHeader, Panel, useApi } from '../components.jsx';
+import { ConfirmDelete, Empty, Field, Loading, Modal, OrderNo, PageHeader, Panel, useApi } from '../components.jsx';
 import { money } from '../format.js';
 
 export const WEB_ORDER_STATUS = {
@@ -19,7 +19,9 @@ function when(value) {
 /** Orders customers placed on the public landing page. */
 export default function WebOrders() {
   const [status, setStatus] = useState('new');
-  const params = qs({ status });
+  const [search, setSearch] = useState('');
+  // A search looks through every status, so an order number always turns up.
+  const params = qs(search.trim() ? { search: search.trim() } : { status });
   const { data, error, loading, reload } = useApi(() => api.get('/web-orders' + params), [params]);
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
@@ -33,12 +35,13 @@ export default function WebOrders() {
       <div className="toolbar">
         <div className="tabs">
           {Object.entries(WEB_ORDER_STATUS).map(([key, s]) => (
-            <button key={key} className={status === key ? 'tab active' : 'tab'} onClick={() => setStatus(key)}>
+            <button key={key} className={status === key && !search.trim() ? 'tab active' : 'tab'} onClick={() => { setStatus(key); setSearch(''); }}>
               {s.label} <span className="tab-count">{counts[key] || 0}</span>
             </button>
           ))}
-          <button className={status === '' ? 'tab active' : 'tab'} onClick={() => setStatus('')}>All <span className="tab-count">{all}</span></button>
+          <button className={status === '' && !search.trim() ? 'tab active' : 'tab'} onClick={() => { setStatus(''); setSearch(''); }}>All <span className="tab-count">{all}</span></button>
         </div>
+        <input className="search" type="search" placeholder="Search order number, name or phone" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       <Panel flush>
@@ -60,9 +63,9 @@ export default function WebOrders() {
             </thead>
             <tbody>
               {data.orders.map((o) => (
-                <tr key={o.id}>
+                <tr key={o.order_number}>
                   <td>
-                    <strong>{o.reference}</strong>
+                    <OrderNo value={o.order_number} />
                     <div className="muted small">{when(o.created_at)}</div>
                   </td>
                   <td className="keep">
@@ -106,9 +109,9 @@ export default function WebOrders() {
       {deleting && (
         <ConfirmDelete
           title="Delete web order"
-          message={`Delete order ${deleting.reference} from ${deleting.customer_name}? Use this for spam or test orders; cancel real ones instead.`}
+          message={`Delete order ${deleting.order_number} from ${deleting.customer_name}? Use this for spam or test orders; cancel real ones instead.`}
           onClose={() => setDeleting(null)}
-          onConfirm={async () => { await api.del(`/web-orders/${deleting.id}`); setDeleting(null); reload(); }}
+          onConfirm={async () => { await api.del(`/web-orders/${deleting.order_number}`); setDeleting(null); reload(); }}
         />
       )}
     </>
@@ -122,7 +125,7 @@ function StatusForm({ order, onClose, onSaved }) {
   async function submit(e) {
     e.preventDefault();
     try {
-      await api.put(`/web-orders/${order.id}`, form);
+      await api.put(`/web-orders/${order.order_number}`, form);
       onSaved();
     } catch (err) {
       setError(err.message);
@@ -130,7 +133,7 @@ function StatusForm({ order, onClose, onSaved }) {
   }
 
   return (
-    <Modal title={`Order ${order.reference}: ${order.customer_name}`} onClose={onClose}>
+    <Modal title={`Order ${order.order_number}: ${order.customer_name}`} onClose={onClose}>
       <form onSubmit={submit} className="form-grid">
         <Field label="Status">
           <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>

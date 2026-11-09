@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasOrderNumber;
 use Illuminate\Database\Eloquent\Model;
 
 class WebOrder extends Model
 {
+    use HasOrderNumber;
+
     public const STATUSES = ['new', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
     protected $fillable = [
@@ -23,10 +26,10 @@ class WebOrder extends Model
 
     protected $appends = ['reference'];
 
-    /** Short order number to read out on the phone, e.g. BGE-00042. */
-    public function getReferenceAttribute(): string
+    /** Older name for the order number, kept so existing callers keep working. */
+    public function getReferenceAttribute(): ?string
     {
-        return 'BGE-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
+        return $this->order_number;
     }
 
     public function handler()

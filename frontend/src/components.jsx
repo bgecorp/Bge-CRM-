@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { Check, Copy } from 'lucide-react';
 import { STATUS_GUIDE, money, num, stockStatus } from './format.js';
 
 export function useApi(loader, deps) {
@@ -195,5 +196,28 @@ export function SalePreview({ quantity, days, unitPrice }) {
       Average Daily Sales: <strong>{num(packs / span)} packs/day</strong> ({num(packs)} ÷ {num(span, 0)} days)
       {price !== null && <> · Total Sales Value: <strong>{money(packs * price)}</strong> ({num(packs)} × {money(price)})</>}
     </p>
+  );
+}
+/** An order number (e.g. 261108K7Q2MX4P) with a button that copies it. */
+export function OrderNo({ value }) {
+  const [copied, setCopied] = useState(false);
+  if (!value) return null;
+  async function copy(e) {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard blocked (e.g. plain http on a phone): the number is still selectable.
+    }
+  }
+  return (
+    <span className="order-no">
+      <span className="order-no-text">{value}</span>
+      <button type="button" className="order-no-copy" onClick={copy} title="Copy order number" aria-label={`Copy order number ${value}`}>
+        {copied ? <Check size={13} /> : <Copy size={13} />}
+      </button>
+    </span>
   );
 }

@@ -78,7 +78,7 @@ export default function Stores() {
       {exportError && <div className="alert alert-error">{exportError}</div>}
 
       <div className="toolbar">
-        <input className="search" placeholder="Search name, contact, phone or address" value={filters.search} onChange={setFilter('search')} />
+        <input className="search" placeholder="Search name, contact, phone, address or order no." value={filters.search} onChange={setFilter('search')} />
         <select value={filters.category} onChange={setFilter('category')}>
           <option value="">All categories</option>
           {Object.entries(CATEGORY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}

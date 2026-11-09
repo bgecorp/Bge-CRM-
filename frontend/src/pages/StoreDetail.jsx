@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { isSuperAdmin, useUser } from '../auth.js';
-import { Badge, Empty, Field, Loading, PageHeader, Panel, StatusGuide, UrgencyBadge, useApi } from '../components.jsx';
+import { Badge, Empty, Field, Loading, OrderNo, PageHeader, Panel, StatusGuide, UrgencyBadge, useApi } from '../components.jsx';
 import {
   BASIS_LABELS, CATEGORY_LABELS, FOLLOW_UP_TYPE_LABELS, NEXT_ACTION_LABELS, PATTERN_LABELS, PREDICTION_GUIDE, STATUS_LABELS,
   date, dueLabel, money, num, today,
@@ -25,8 +25,8 @@ export default function StoreDetail() {
 
 
   async function deleteOrder(order) {
-    if (!window.confirm(`Delete the order of ${order.quantity} delivered ${date(order.delivered_at)}?`)) return;
-    await api.del(`/orders/${order.id}`);
+    if (!window.confirm(`Delete order ${order.order_number} (${num(order.quantity)} × ${order.product?.name ?? 'product'}, delivered ${date(order.delivered_at)})?`)) return;
+    await api.del(`/orders/${order.order_number}`);
     reload();
   }
 
@@ -72,10 +72,11 @@ export default function StoreDetail() {
         <Panel title="Orders delivered" flush>
           {store.orders.length === 0 ? <Empty>No orders recorded.</Empty> : (
             <table className="table">
-              <thead><tr><th>Delivered</th><th>Product</th><th className="num">Qty</th><th className="num">Value</th><th /></tr></thead>
+              <thead><tr><th>Order no.</th><th>Delivered</th><th>Product</th><th className="num">Qty</th><th className="num">Value</th><th /></tr></thead>
               <tbody>
                 {store.orders.map((o) => (
-                  <tr key={o.id}>
+                  <tr key={o.order_number}>
+                    <td><OrderNo value={o.order_number} /></td>
                     <td>{date(o.delivered_at)}</td>
                     <td>{o.product?.name}</td>
                     <td className="num">{num(o.quantity)}</td>
@@ -170,13 +171,16 @@ function OrderForm({ storeId, products, onSaved }) {
   const blank = { product_id: '', delivered_at: today(), quantity: '', unit_price: '', notes: '' };
   const [form, setForm] = useState(blank);
   const [errors, setErrors] = useState({});
+  const [saved, setSaved] = useState(null);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   async function submit(e) {
     e.preventDefault();
     setErrors({});
+    setSaved(null);
     try {
-      await api.post(`/stores/${storeId}/orders`, { ...form, unit_price: form.unit_price || null });
+      const order = await api.post(`/stores/${storeId}/orders`, { ...form, unit_price: form.unit_price || null });
+      setSaved(order.order_number);
       setForm({ ...blank, product_id: form.product_id });
       onSaved();
     } catch (err) {
@@ -203,6 +207,7 @@ function OrderForm({ storeId, products, onSaved }) {
           <input type="number" min="0" step="0.01" value={form.unit_price} onChange={set('unit_price')} />
         </Field>
         <p className="hint span-2">Each order updates the prediction: the first order is the starting point, the second gives the first estimate.</p>
+        {saved && <p className="saved-note span-2">Order saved: <OrderNo value={saved} /></p>}
         <div className="form-actions span-2">
           <button type="submit" className="btn btn-primary">Save order</button>
         </div>

@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/stores/export', [StoreController::class, 'export'])->middleware(EnsureSuperAdmin::class);
     Route::get('/stores/{store}', [StoreController::class, 'show']);
     Route::post('/stores/{store}/orders', [OrderController::class, 'store']);
+    Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
     Route::get('/predictions', [PredictionController::class, 'index']);
     Route::get('/follow-ups', [FollowUpController::class, 'index']);
